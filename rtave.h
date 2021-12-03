@@ -16,7 +16,7 @@
  */
 
 #ifndef RTAVE_H
-#define RTAVE_H "$Id: rtave.h,v 1.2 2021/04/20 22:18:28 jmccue Exp $"
+#define RTAVE_H "INCLUDED"
 
 #define MIN_REC 28
 #define MAX_SIZE_ITEM 512

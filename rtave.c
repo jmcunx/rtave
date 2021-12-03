@@ -25,8 +25,6 @@
 
 #include "rtave.h"
 
-char *rtave_c="$Id: rtave.c,v 1.5 2021/04/20 22:18:27 jmccue Exp $";
-
 /*
  * init_rec()
  */
@@ -301,5 +299,3 @@ int main(int argc, char **argv)
   exit(EXIT_SUCCESS);
 
 } /* main() */
-
-/* END: ave_runtime.c */

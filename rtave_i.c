@@ -27,10 +27,6 @@
 #define SCKARG 80
 #define MSG_HELP_11 "Print Average Time Difference"
 
-char *rtave_i_c="$Id: rtave_i.c,v 1.4 2021/04/20 22:18:29 jmccue Exp $";
-extern char *rtave_c;
-
-
 /*
  * init_w() -- initialize work area
  */
@@ -59,17 +55,9 @@ void init_w(struct s_work *w)
 void show_rev(FILE *fp)
 {
   fprintf(fp,"%s %s:\n", PROG_NAME, LIT_REV);
-  fprintf(fp,"\t%s\n", RTAVE_H);
-  fprintf(fp,"\t%s\n", rtave_c);
-  fprintf(fp,"\t%s\n", rtave_i_c);
 
-
-#ifdef J_LIB2M_H
-  fprintf(fp, "\t%s\n", J_LIB2M_H);
-#endif
 #ifdef J_LIB2_H
-  fprintf(fp, "\t%s\n", J_LIB2_H);
-  fprintf(fp, "\t     %s %s\n", LIT_INFO_02, j2_get_build());
+  fprintf(fp, "\t%s %s\n", LIT_INFO_02, j2_get_build());
 #endif
 
 #ifdef OSTYPE
@@ -159,5 +147,3 @@ void init(int argc, char **argv, struct s_work *w)
   process_arg(argc, argv, w);
 
 }  /* init() */
-
-/* END: aver_i.c */
