@@ -1,0 +1,85 @@
+.\" 
+.\" Copyright (c) 2021 2022
+.\"     John McCue <jmccue@jmcunx.com>
+.\" 
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\" 
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\" 
+.TH rtave 1 "$Date: 2021/04/20 22:18:29 $" "JMC" "User Commands"
+.SH NAME
+rtave - Determine Average Time Difference
+.SH SYNOPSIS
+rtave [OPTIONS]
+.SH DESCRIPTION
+Reads a data via stdin and prints the Average
+Seconds Difference for all Valid Records between
+Start Date/Time and End Date/Time on stdout.
+.TP
+-a
+Process all Records.
+If not specified, all entries that
+generate a difference greater that 24 hours
+will be ignored.
+.TP
+-h
+Show brief help and exit.
+.TP
+-V
+Output version information and exit.
+.TP
+-v
+Optional, Verbose Level.
+Print information about the run.
+Default is to only print desired results.
+.nf
+    Level  Meaning
+    -----  ------------------------------------------------
+    = 0    Do not show any detail or messages
+    >= 1   Show additional Stats other than the Average
+           Start/End Data/Time Difference on stdout
+    >= 2   Above plus warnings about Data Records on stderr
+    >= 3   Above plus show Detail Data processed on stdout
+.fi
+
+.SH INPUT FORMAT
+This is the format of the Input File,
+it must be a flat fixed length File:
+
+.nf
+    Pos  Size  Format    Description
+    ---  ----  --------  ---------------------------------------
+      1    8   YYYYMMDD  Start Date
+      9    6   HHMMSS    Start Time
+     15    8   YYYYMMDD  End Date
+     23    6   HHMMSS    End Time
+     29  n/a   string    Used as col 1 when creating a csv file
+
+Example Records:
+----------------
+2021020208523920210202093709Run Times for Item 1
+2021020308523920210203103103Run Times for Item 1
+2021020408523920210204113204Run Times for Item 1
+.fi
+.SH DIAGNOSTICS
+On failure, reason for the abort is printed on stderr
+.PP
+If a difference between Start and End is greater than
+24 hours, that entry will be bypassed when determining the Average.
+See, '-v' above.
+.SH SEE-ALSO
+awk(1),
+bc(1)
+.SH ERROR-CODES
+.nf
+0 success
+>0 Failed
+.fi
