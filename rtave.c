@@ -15,7 +15,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifndef _WIN32
+#ifndef _MSDOS
 #include <sys/param.h>
+#endif
+#endif
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -267,7 +271,7 @@ int main(int argc, char **argv)
   
   init(argc, argv, &w);
 
-  while (getline(&buf, &bsize, stdin) > (ssize_t) -1)
+  while (j2_getline(&buf, &bsize, stdin) > (ssize_t) -1)
     {
       w.total_records++;
       j2_rtw(buf);
