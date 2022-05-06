@@ -25,6 +25,13 @@
 #define COUNTER  long int
 #define QTY_TYPE long double
 
+struct s_file
+{
+  FILE *fp;
+  char *fname;
+  int allow_close;
+} ;
+
 struct s_rec
 {
   struct s_j2_datetime start_date;
@@ -32,7 +39,7 @@ struct s_rec
   time_t seconds_start;
   time_t seconds_end;
   time_t seconds_diff;
-  char item_name[(MAX_SIZE_ITEM * 1)];
+  char item_name[(MAX_SIZE_ITEM + 1)];
   COUNTER recnum;
 } ;
 
@@ -42,16 +49,25 @@ struct s_work
   int all;
   int out_csv;
   int show_title;
-  char item_name[(MAX_SIZE_ITEM * 1)];
+  int force;
+  char item_name[(MAX_SIZE_ITEM + 1)];
   COUNTER total_records;
   COUNTER selected_records;
   COUNTER seconds_total_diff;
   time_t  seconds_min;
   time_t  seconds_max;
   time_t  seconds_ave;
+  struct s_file in;
+  struct s_file out;
+  struct s_file err;
 } ;
 
 /*** prototypes ***/
-void init(int, char **, struct s_work *);
+void init(int argc, char **argv, struct s_work *w);
+void init_file(struct s_file *f);
+void set_fname(struct s_file *f, char *fname);
+int open_read(struct s_file *f, struct s_file *e, char *fname);
+void open_write(struct s_file *f, int force, int is_stderr);
+void close_file(struct s_file *f);
 
 #endif /* RTAVE_H */

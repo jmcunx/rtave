@@ -24,6 +24,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <errno.h>
+#include <unistd.h>
 #include <j_lib2.h>
 #include <j_lib2m.h>
 
@@ -48,10 +50,10 @@ void init_rec(struct s_rec *r)
 /*
  * show_dts() - show date/time info
  */
-void show_dts(FILE *fp, struct s_j2_datetime dfmt,
+void show_dts(struct s_file *err, struct s_j2_datetime dfmt,
 	      time_t seconds, char *title)
 {
-  fprintf(fp, "%-10s %02d/%02d/%04d %02d:%02d:%02d %ld\n", title,
+  fprintf(err->fp, MSG_INFO_I052, title,
 	  dfmt.month, dfmt.dd, dfmt.yyyy,
 	  dfmt.hh, dfmt.minutes, dfmt.ss,
 	  (long) seconds);
@@ -171,7 +173,7 @@ void show_results(FILE *fp, struct s_work *w)
 /*
  * load_date()
  */
-void load_date(struct s_j2_datetime *dfmt, char *buf, COUNTER recnum, int idx)
+void load_date(struct s_file *err, struct s_j2_datetime *dfmt, char *buf, COUNTER recnum, int idx)
 {
   char dt[DATE_SIZE_MAX];
 
@@ -182,7 +184,7 @@ void load_date(struct s_j2_datetime *dfmt, char *buf, COUNTER recnum, int idx)
 
   if ( ! j2_is_numr(dt) )
     {
-      fprintf(stderr, MSG_ERR_E087, recnum, dt);
+      fprintf(err->fp, MSG_ERR_E087, recnum, dt);
       exit(EXIT_FAILURE);
     }
 
@@ -191,16 +193,16 @@ void load_date(struct s_j2_datetime *dfmt, char *buf, COUNTER recnum, int idx)
 
   if ( ! j2_date_is_valid(dfmt) )
     {
-      fprintf(stderr, MSG_ERR_E087, recnum, dt);
+      fprintf(err->fp, MSG_ERR_E087, recnum, dt);
       exit(EXIT_FAILURE);
     }
   
-} /* END: load_date() */
+} /* load_date() */
 
 /*
  * load_rec()
  */
-int load_rec(struct s_rec *r, char *buf, COUNTER recnum, int verbose, int all)
+int load_rec(struct s_file *err, struct s_rec *r, char *buf, COUNTER recnum, int verbose, int all)
 {
 
   size_t sbuf = 0;
@@ -210,7 +212,7 @@ int load_rec(struct s_rec *r, char *buf, COUNTER recnum, int verbose, int all)
   if (buf == (char *) NULL)
     {
       if (verbose > 1)
-	fprintf(stderr, MSG_WARN_W030, recnum);
+	fprintf(err->fp, MSG_WARN_W030, recnum);
       return(FALSE);
     }
 
@@ -219,15 +221,15 @@ int load_rec(struct s_rec *r, char *buf, COUNTER recnum, int verbose, int all)
   if (sbuf < MIN_REC)
     {
       if (verbose > 1)
-	fprintf(stderr, MSG_WARN_W030, recnum);
+	fprintf(err->fp, MSG_WARN_W030, recnum);
       return(FALSE);
     }
 
   if (sbuf > MIN_REC)
     strncpy(r->item_name, &(buf[28]), MAX_SIZE_ITEM);
 
-  load_date(&(r->start_date),buf,recnum,0);
-  load_date(&(r->end_date),buf,recnum,14); 
+  load_date(err,&(r->start_date),buf,recnum,0);
+  load_date(err,&(r->end_date),buf,recnum,14); 
   r->recnum = recnum;
 
   r->seconds_start = j2_d_to_sec(&(r->start_date));
@@ -235,9 +237,9 @@ int load_rec(struct s_rec *r, char *buf, COUNTER recnum, int verbose, int all)
 
   if (r->seconds_start > r->seconds_end)
     {
-      fprintf(stderr, MSG_ERR_E086, r->recnum);
-      show_dts(stderr, r->start_date, r->seconds_start, "START");
-      show_dts(stderr, r->end_date,   r->seconds_end,   "END");
+      fprintf(err->fp, MSG_ERR_E086, r->recnum);
+      show_dts(err, r->start_date, r->seconds_start, "START");
+      show_dts(err, r->end_date,   r->seconds_end,   "END");
       exit(EXIT_FAILURE);
     }
 
@@ -250,14 +252,62 @@ int load_rec(struct s_rec *r, char *buf, COUNTER recnum, int verbose, int all)
 
   if (verbose > 1)
     {
-      fprintf(stderr, MSG_WARN_W029, r->recnum);
-      show_dts(stderr, r->start_date, r->seconds_start, "START");
-      show_dts(stderr, r->end_date,   r->seconds_end,   "END");
+      fprintf(err->fp, MSG_WARN_W029, r->recnum);
+      show_dts(err, r->start_date, r->seconds_start, "START");
+      show_dts(err, r->end_date,   r->seconds_end,   "END");
     }
   
   return(FALSE);
   
-} /* END: load_rec() */
+} /* load_rec() */
+
+/*
+ * process_a_file()
+ */
+void process_a_file(struct s_work *w, char *fname, char **buf, size_t *bsize)
+{
+  long int reads = 0L;
+  struct s_rec rec;
+
+  if (open_read(&(w->in), &(w->err), fname) != TRUE)
+    exit(EXIT_FAILURE);
+
+  while (j2_getline(buf, bsize, w->in.fp) > (ssize_t) -1)
+    {
+      reads++;
+      w->total_records++;
+      j2_rtw((*buf));
+      if (load_rec(&(w->err), &rec, (*buf), w->total_records, w->verbose, w->all) != TRUE)
+	continue;
+      if (*w->item_name == JLIB2_CHAR_NULL)
+	{
+	  if (strlen(rec.item_name) > 0)
+	    strncpy(w->item_name, rec.item_name, MAX_SIZE_ITEM);
+	}
+
+      w->selected_records++;
+      w->seconds_total_diff += rec.seconds_diff;
+      if (w->seconds_min > rec.seconds_diff)
+	w->seconds_min = rec.seconds_diff;
+      if (w->seconds_max < rec.seconds_diff)
+	w->seconds_max = rec.seconds_diff;
+      if (w->verbose > 2)
+	{
+	  fprintf(w->err.fp, MSG_INFO_I051, reads);
+	  show_dts(&(w->err), rec.start_date, rec.seconds_start, "START");
+	  show_dts(&(w->err), rec.end_date,   rec.seconds_end,   "END");
+	}
+    }
+
+  if (w->verbose > 0)
+    {
+      fprintf(w->err.fp, MSG_INFO_I005, reads, 
+              (w->in.fname == (char *) NULL ? LIT_STDIN : w->in.fname));
+    }
+
+  close_file(&(w->in));
+
+} /* process_a_file() */
 
 /*
  * main()
@@ -267,37 +317,27 @@ int main(int argc, char **argv)
   struct s_work w;
   char *buf = (char *) NULL;
   size_t bsize = (size_t) 0;
-  struct s_rec rec;
+  int i = 0;
   
   init(argc, argv, &w);
 
-  while (j2_getline(&buf, &bsize, stdin) > (ssize_t) -1)
-    {
-      w.total_records++;
-      j2_rtw(buf);
-      if (load_rec(&rec, buf, w.total_records, w.verbose, w.all) != TRUE)
-	continue;
-      if (*w.item_name == JLIB2_CHAR_NULL)
-	{
-	  if (strlen(rec.item_name) > 0)
-	    strncpy(w.item_name, rec.item_name, MAX_SIZE_ITEM);
-	}
-
-      w.selected_records++;
-      w.seconds_total_diff += rec.seconds_diff;
-      if (w.seconds_min > rec.seconds_diff)
-	w.seconds_min = rec.seconds_diff;
-      if (w.seconds_max < rec.seconds_diff)
-	w.seconds_max = rec.seconds_diff;
-      if (w.verbose > 2)
-	{
-	  show_dts(stdout, rec.start_date, rec.seconds_start, "START");
-	  show_dts(stdout, rec.end_date,   rec.seconds_end,   "END");
-	}
-    }
+  for (i = optind; i < argc; i++)
+    process_a_file(&w, argv[i], &buf, &bsize);
+  if (i == optind)
+    process_a_file(&w, FILE_NAME_STDIN, &buf, &bsize);
 
   w.seconds_ave = w.seconds_total_diff / w.selected_records;
-  show_results(stdout, &w);
+  show_results(w.out.fp, &w);
+
+#ifdef OpenBSD
+  freezero(buf, bsiz);
+#else
+  if (buf != (char *) NULL)
+    free(buf);
+#endif
+
+  close_file(&(w.out));
+  close_file(&(w.err));
   
   /* done */
   exit(EXIT_SUCCESS);

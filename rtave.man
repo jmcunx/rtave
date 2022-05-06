@@ -18,11 +18,14 @@
 .SH NAME
 rtave - Determine Average Time Difference
 .SH SYNOPSIS
-rtave [OPTIONS]
+rtave [OPTIONS]... [FILE]...
 .SH DESCRIPTION
-Reads a data via stdin and prints the Average
+Reads one or more Files and Prints the Average
 Seconds Difference for all Valid Records between
-Start Date/Time and End Date/Time on stdout.
+Start Date/Time and End Date/Time.
+.PP
+If no files (FILE) are specified on the command line or
+if FILE has name '-', stdin (Standard Input) is used.
 .TP
 -a
 Process all Records.
@@ -30,24 +33,35 @@ If not specified, all entries that
 generate a difference greater that 24 hours
 will be ignored.
 .TP
+-e file
+Optional, if used, write error messages to file 'file'.
+If not specified, errors written to stderr.
+.TP
+-f
+Optional, Force file create.
+Create file even if the target file exists.
+.TP
 -h
 Show brief help and exit.
+.TP
+-o file
+Optional, if used, write output to file 'file'.
+If not specified, output written to stdout.
 .TP
 -V
 Output version information and exit.
 .TP
 -v
 Optional, Verbose Level.
-Print information about the run.
-Default is to only print desired results.
+Print information about the run on stderr.
+Default is to only print errors on stderr.
 .nf
     Level  Meaning
-    -----  ------------------------------------------------
-    = 0    Do not show any detail or messages
-    >= 1   Show additional Stats other than the Average
-           Start/End Data/Time Difference on stdout
-    >= 2   Above plus warnings about Data Records on stderr
-    >= 3   Above plus show Detail Data processed on stdout
+    -----  -----------------------------------------------------
+    = 0    Print Errors on stderr
+    >= 1   Above plus Additional information about Files Read
+    >= 2   Above plus warnings about Data Records
+    >= 3   Above plus show Detail Data processed
 .fi
 
 .SH INPUT FORMAT
@@ -74,7 +88,11 @@ On failure, reason for the abort is printed on stderr
 .PP
 If a difference between Start and End is greater than
 24 hours, that entry will be bypassed when determining the Average.
-See, '-v' above.
+See, '-a' and '-v' above.
+.PP
+If you specify '-e', in some cases info will still be
+written to stderr.
+This can occur during Command Line Argument Processing.
 .SH SEE-ALSO
 awk(1),
 bc(1)

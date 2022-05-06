@@ -76,8 +76,14 @@ MKDIR=mkdir
 
 EXE=
 OBJ=.o
+
+#--- for valgrind
 CFLAGS=-c $(WALL) -IINCJLIB -DOSTYPE="\"$(OSDESC)\""
 LFLAGS=$(WALL) -LJLIBLOC -o rtave $(LIBS)
+
+#--- for valgrind
+#CFLAGS=-g -O0 -c $(WALL) -IINCJLIB -DOSTYPE="\"$(OSDESC)\""
+#LFLAGS=-g -O0 $(WALL) -LJLIBLOC -o rtave $(LIBS)
 
 ALL_OBJ=rtave$(OBJ) rtave_i$(OBJ)
 ALL_C=rtave.c rtave_i.c
