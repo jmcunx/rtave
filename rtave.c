@@ -330,7 +330,7 @@ int main(int argc, char **argv)
   show_results(w.out.fp, &w);
 
 #ifdef OpenBSD
-  freezero(buf, bsiz);
+  freezero(buf, bsize);
 #else
   if (buf != (char *) NULL)
     free(buf);
