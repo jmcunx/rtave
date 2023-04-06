@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021 2022
+ * Copyright (c) 2021 2022 2023 2024
  *     John McCue <jmccue@jmcunx.com>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -26,8 +26,11 @@
 #include <ctype.h>
 #include <errno.h>
 #include <unistd.h>
+
+#ifdef HAVE_JLIB
 #include <j_lib2.h>
 #include <j_lib2m.h>
+#endif
 
 #include "rtave.h"
 
